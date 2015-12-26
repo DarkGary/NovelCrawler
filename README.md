@@ -1,2 +1,2 @@
 # NovelCrawler
-Jsoup based WebCreawler
+Jsoup based WebCrawler
