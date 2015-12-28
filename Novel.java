@@ -11,49 +11,57 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 public class Novel {
-	private int maxPage;//小說最大頁數
-	private String[][] data;//小說內容[頁數][章節]
-	private int novelNumber;//小說編號
-	private int sectionNumber[];//index = pagenumber
+	
+	private static final String HOST_NAME = "http://ck101.com/";
+	private static final 
+		String REQUEST_USER_AGENT_HEADER = "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0";
+	
+	private int maxPage;
+	private String[][] data;
+	private int novelNumber;
+	private int sectionNumber[];
 	private Thread tg[];
-	public Novel(int novelNumber) throws IOException, InterruptedException{//傳入小說編號
+	
+	public Novel(int novelNumber) throws IOException, InterruptedException {
 		this.novelNumber = novelNumber;
 		maxPage = -1;
 		tg = new Thread[getMaxPage()];
 		loadAll();
 		joinAll();
 	}
-	public void loadAll() throws IOException{
-		for(int i = 2 ; i <= getMaxPage() ; i++){
+	
+	public void loadAll() throws IOException {
+		for(int i = 2 ; i <= getMaxPage() ; i++) {
 			loadByPage(i);
 		}
 		
 	}
-	public void joinAll() throws InterruptedException{
-		for(int i = 1 ; i < getMaxPage() ; i++){
+	
+	public void joinAll() throws InterruptedException {
+		for(int i = 1 ; i < getMaxPage() ; i++) {
 			tg[i].join();
 		}
 	}
-	public int getMaxPage(){
+	
+	public int getMaxPage() {
 		Connection conn;
 		Document doc = null;
 		Elements element = null;
-		if(maxPage < 0){
-			while(maxPage < 0){
+		if(maxPage < 0) {
+			while(maxPage < 0) {
 				try {
 					conn = Jsoup.connect(getUrlByPage(1));
-					conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
+					conn.header("User-Agent", REQUEST_USER_AGENT_HEADER);
 			        doc = conn.get();
 			        doc.outputSettings(new Document.OutputSettings().prettyPrint(false));
 			        element = doc.select("a.last");
 			        String x[] = element.get(0).text().split(" ");
 			        maxPage = Integer.parseInt(x[1]);
-			        
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					maxPage = -1;
 				}
 			}
+			
 			doc.select("i.pstatus").remove();
 			doc.select("br").append("\\n");
 		    doc.select("p").prepend("\\n\\n");
@@ -69,67 +77,59 @@ public class Novel {
 		}    
 		return maxPage;
 	}
-	public void loadByPage(int pageNumber){
+	
+	public void loadByPage(int pageNumber) {
 		int arrayNumber = pageNumber-1;
 		tg[arrayNumber] = new Load(pageNumber);
 		tg[arrayNumber].start();
 	}
-	public String getUrlByPage(int pageNumber) throws IOException{
-		return "http://ck101.com/thread-" + novelNumber + "-"+ pageNumber +"-1.html";
+	
+	public String getUrlByPage(int pageNumber) throws IOException {
+		return HOST_NAME + "thread-" + novelNumber + "-" + pageNumber + "-1.html";
 	}
-	public int getNovelNumber(){
+	
+	public int getNovelNumber() {
 		return novelNumber;
 	}
 	
-	
-	public static void main(String[] args) throws IOException, InterruptedException{
-		long begin = System.currentTimeMillis();
+	public static void main(String[] args) throws IOException, InterruptedException {
 		Novel n = new Novel(3378932);
-//		System.out.println("Novel Number : " + n.getNovelNumber());
-//		System.out.println("Max page : " + n.getMaxPage());
-//		System.out.println("SectionNumber : " + n.sectionNumber[0]);
-		
-		long over = System.currentTimeMillis();
 		FileOutputStream out = new FileOutputStream("out.txt");
-		for(int i = 0 ; i < n.sectionNumber[0]; i++){
+		for(int i = 0 ; i < n.sectionNumber[0]; i++) {
 			out.write(n.data[0][i].getBytes("UTF-8"));
 		}
-		System.out.println("使用的時間為： "
-	            + (over - begin) + " 毫秒 " );
-
 	}
 	
-	public class Load extends Thread{
+	public class Loader extends Thread {
 
-		int pageNumber;
-		public Load(int pageNumber){
+		private int pageNumber;
+		
+		public Load(int pageNumber) {
 			this.pageNumber = pageNumber;
 		}
+		
 		@Override
 		public void run() {
-			if(getMaxPage() >= pageNumber){
-				
+			if(getMaxPage() >= pageNumber) {
 				int arrayNumber = pageNumber-1;
-				while(sectionNumber[arrayNumber] <= 0){
-					try{
-						
+				while(sectionNumber[arrayNumber] <= 0) {
+					try {
 						Connection conn = Jsoup.connect(getUrlByPage(pageNumber));
-				        conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
+				        conn.header("User-Agent", REQUEST_USER_AGENT_HEADER);
 				        Document doc = conn.get();
 				        doc.select("br").append("\\n");
 				        doc.select("i.pstatus").remove();
 				        Elements content = doc.select("td.t_f");
 				        sectionNumber[arrayNumber] = content.size();
 				        data[arrayNumber] = new String[sectionNumber[arrayNumber]];
-				        for(int i = 0 ; i < sectionNumber[arrayNumber] ; i++){
+				        for(int i = 0 ; i < sectionNumber[arrayNumber] ; i++) {
 				        	data[arrayNumber][i] = content.get(i).text();
 				        }
-					}catch(IOException e){
+					} catch (IOException e) {
 						sectionNumber[arrayNumber] = -1;
 					}
-					//System.out.println(""+pageNumber + "頁的章節數量為:" + sectionNumber[arrayNumber]);
 				}
-			}else{
+			} else {
 				System.out.printf("pageNumber error");
 			}
 		}
