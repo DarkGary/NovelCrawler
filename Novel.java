@@ -13,8 +13,8 @@ import java.net.URLEncoder;
 public class Novel {
     
     private static final String HOST_NAME = "http://ck101.com/";
-    private static final 
-        String REQUEST_USER_AGENT_HEADER = "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0";
+    private static final String 
+REQUEST_USER_AGENT_HEADER = "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0";
     
     private int maxPage;
     private String[][] data;
@@ -104,7 +104,7 @@ public class Novel {
 
         private int pageNumber;
         
-        public Load(int pageNumber) {
+        public Loader(int pageNumber) {
             this.pageNumber = pageNumber;
         }
         
